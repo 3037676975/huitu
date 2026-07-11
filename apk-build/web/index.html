@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1677ff" />
+  <meta name="description" content="抖音门店资料现场采集、校验与自动 ZIP 打包工具" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>抖音门店资料打包助手 v3.1</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">DOUYIN STORE MATERIALS</div>
+        <h1>抖音门店资料打包助手</h1>
+        <p>按 1.docx 的照片清单采集，自动生成 Word 与标准 ZIP</p>
+      </div>
+      <button id="installBtn" class="ghost-btn hidden" type="button">安装到手机</button>
+    </header>
+
+    <nav class="segmented" aria-label="页面导航">
+      <button class="nav-btn active" data-page="collect" type="button">新建资料</button>
+      <button class="nav-btn" data-page="records" type="button">草稿与记录 <span id="recordCount" class="count-badge">0</span></button>
+      <button class="nav-btn" data-page="guide" type="button">使用说明</button>
+    </nav>
+
+    <main>
+      <section id="page-collect" class="page active">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <span class="status-dot"></span>
+            <strong>敏感资料仅在当前设备处理</strong>
+            <span>身份证、银行卡和营业执照不会自动上传外部服务器。</span>
+          </div>
+          <button id="resetBtn" class="text-btn" type="button">清空重填</button>
+        </div>
+
+        <form id="merchantForm" novalidate>
+          <section class="card form-card">
+            <div class="section-heading">
+              <div>
+                <span class="step">01</span>
+                <h2>Word 文本信息</h2>
+              </div>
+              <span class="required-hint">带 * 为必填</span>
+            </div>
+
+            <div class="form-grid">
+              <label class="field full">
+                <span>店铺名称 / 资料包名称 *</span>
+                <input id="storeName" name="storeName" type="text" placeholder="例如：淄博烧烤" autocomplete="organization" required />
+              </label>
+
+              <label class="field">
+                <span>1. 店铺 ID *</span>
+                <input id="storeId" name="storeId" type="text" inputmode="numeric" placeholder="抖音门店 ID" required />
+              </label>
+
+              <label class="field">
+                <span>2. 店铺成立时间 *</span>
+                <input id="establishedDate" name="establishedDate" type="date" required />
+              </label>
+
+              <label class="field">
+                <span>4. 店铺日均流水（万）*</span>
+                <input id="dailyTurnover" name="dailyTurnover" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如：0.3" required />
+              </label>
+
+              <label class="field">
+                <span>6. 总销售额（万）*</span>
+                <input id="totalSales" name="totalSales" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如：0.3" required />
+              </label>
+
+              <label class="field">
+                <span>5. 商品最低价（元）*</span>
+                <input id="priceMin" name="priceMin" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如：30" required />
+              </label>
+
+              <label class="field">
+                <span>5. 商品最高价（元）*</span>
+                <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" placeholder="例如：188" required />
+              </label>
+
+              <label class="field">
+                <span>11. 进账人手机号 *</span>
+                <input id="incomingPhone" name="incomingPhone" type="tel" inputmode="tel" placeholder="结算进账手机号" autocomplete="tel" required />
+              </label>
+
+              <label class="field">
+                <span>采集日期</span>
+                <input id="collectDate" name="collectDate" type="date" />
+              </label>
+
+              <label class="field full">
+                <span>16. 门店链接 *</span>
+                <input id="storeLink" name="storeLink" type="url" inputmode="url" placeholder="粘贴抖音门店链接" required />
+              </label>
+
+              <label class="field">
+                <span>提交业务员</span>
+                <input id="salesperson" name="salesperson" type="text" placeholder="用于记录提交人" />
+              </label>
+
+              <label class="field full">
+                <span>备注</span>
+                <textarea id="remarks" name="remarks" rows="3" placeholder="补充说明，不影响 Word 原有 1～19 项顺序"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="card photo-card">
+            <div class="section-heading photo-heading">
+              <div>
+                <span class="step">02</span>
+                <h2>按更顺手的流程上传 13 张照片</h2>
+              </div>
+              <span class="required-hint">平台与经营项可查看示例</span>
+            </div>
+
+            <div class="upload-summary">
+              <div>
+                <strong id="uploadProgressText">0 / 13</strong>
+                <span>必传图片已完成</span>
+              </div>
+              <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+            </div>
+
+            <p class="order-note">已重新整理为：<strong>现场与证照 → 平台门店 → 经营与结算</strong>，同一类连续操作，不用来回翻找。</p>
+            <div id="photoSlots" class="photo-groups"></div>
+          </section>
+
+          <section class="card check-card">
+            <div class="section-heading">
+              <div>
+                <span class="step">03</span>
+                <h2>检查并生成资料包</h2>
+              </div>
+            </div>
+
+            <div id="validationBox" class="validation-box neutral">
+              <div class="validation-icon">✓</div>
+              <div>
+                <strong>填写完成后点击检查</strong>
+                <p>系统会检查 9 项必填文本和 13 张必传照片。</p>
+              </div>
+            </div>
+
+            <div class="action-grid">
+              <button id="saveDraftBtn" class="secondary-btn" type="button">保存草稿</button>
+              <button id="validateBtn" class="secondary-btn" type="button">检查资料</button>
+              <button id="buildZipBtn" class="primary-btn" type="button">生成 ZIP 资料包</button>
+            </div>
+            <p class="privacy-note">ZIP 内仅生成“店铺名.docx + 图片1～图片13”，不添加多余 JSON 或清单文件。</p>
+          </section>
+        </form>
+      </section>
+
+      <section id="page-records" class="page">
+        <section class="card records-card">
+          <div class="section-heading">
+            <div>
+              <span class="step">记录</span>
+              <h2>本机草稿与已打包记录</h2>
+            </div>
+            <button id="clearRecordsBtn" class="text-btn danger" type="button">清空全部</button>
+          </div>
+          <div id="recordsList" class="records-list"></div>
+        </section>
+      </section>
+
+      <section id="page-guide" class="page">
+        <section class="card guide-card">
+          <div class="section-heading">
+            <div>
+              <span class="step">指南</span>
+              <h2>图片顺序与 Word 对应关系</h2>
+            </div>
+          </div>
+          <ol class="guide-steps">
+            <li><strong>图片1～图片6：现场与证照</strong><span>营业执照、法人身份证正反面、结算银行卡、门头和店内环境，现场一次拍完。</span></li>
+            <li><strong>图片7～图片10：平台门店页面</strong><span>入驻平台、来客首页、抖音门店和店铺二维码，连续在手机里截图。</span></li>
+            <li><strong>图片11～图片13：经营与结算</strong><span>后台订单、经营数据总览和平台结算账户，审核时更容易连续查看。</span></li>
+            <li><strong>平台与经营项保留示例</strong><span>现场与证照直接拍摄；后两组可点击“查看示例”核对平台页面。</span></li>
+          </ol>
+          <div class="tip-box">
+            <strong>现场拍摄建议</strong>
+            <p>证件和银行卡要完整、清晰、四角可见；门头照必须包含完整店名与实际经营场所；店内环境要能看出真实经营状态。平台截图不要裁掉店名、账号、时间或关键数据区域。</p>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="exampleModal" class="example-modal" aria-hidden="true">
+    <div class="example-dialog" role="dialog" aria-modal="true" aria-labelledby="exampleTitle">
+      <div class="example-dialog-head">
+        <div>
+          <span class="example-kicker">1.docx 对应项目示例</span>
+          <h2 id="exampleTitle">照片示例</h2>
+        </div>
+        <button id="exampleCloseBtn" class="example-close" type="button" aria-label="关闭示例">×</button>
+      </div>
+      <div class="example-image-wrap">
+        <img id="exampleImage" alt="照片示例" />
+      </div>
+      <p id="exampleNote" class="example-note"></p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app-1.js"></script>
+  <script src="app-2.js"></script>
+  <script src="app-3.js"></script>
+</body>
+</html>
